@@ -1,0 +1,190 @@
+---
+title: "HW5"
+author: "Artur Sak"
+date: "October 4, 2016"
+output: html_document
+---
+
+#Part 1
+
+For this problem we will start with a simulation in order to find out how large n needs
+to be for the binomial distribution to be approximated by the normal
+distribution. 
+
+We will take m samples from the binomial distribution for some n and p.
+
+1.(4pts.) 
+
+Let's let p=1/2, use the rbinom function to generate the sample of size m. Add normal curves to all of the plots. 
+Use 3 values for n, 10, 30, and 50. Display the histograms as well as your normal curves.
+
+```{r}
+nums = c(10, 30, 50)
+
+for(n in nums) {
+	dist = rbinom(100, n, 0.5)
+	hist(dist, freq=FALSE)
+	curve(dnorm(x, mean(dist), sd(dist)), add=TRUE)
+}
+```
+
+1b.(3pts.) 
+
+Now use the techniques described in class to improve graphs.Explain each step you choose including why you are making the change. You might consider creating density plots, changing color, axes, labeling, legend, and others for example.
+
+```{r}
+
+for(n in nums) {
+	dist = rbinom(100, n, 0.5)
+	hist(dist,
+	#Stylistic choice to shade the bars in the histogram with lines
+		density=10,
+	#Made the histogram lightgray so it fades into the background and accentuates the normalized curved
+		col="lightgray",
+		freq=FALSE, 
+		 #Modified the title to be more descriptive (of the data being displayed)
+		main="Normal Curve Over Density Histogram of \nRandom Binomial Distribution", 
+		 #Added x-axis label to show which parameters passed to rbinom() generated the data
+		xlab= paste("rbinom(100", as.character(n), "0.5)", sep=", " )
+	)
+	 #Made the normalized curve blue to emphasize that we are using it as a benchmark (for comparing the generated data)
+	curve(dnorm(x, mean(dist), sd(dist)), col="blue", add=TRUE)
+}
+```
+
+* Stylistic choice to shade the bars in the histogram with lines
+* Made the histogram lightgray so it fades into the background and accentuates the normalized curved
+* Modified the title to be more descriptive (of the data being displayed)
+* Add x-axis label to show which parameters passed to rbinom() generated the data
+* Made the normalized curve blue to emphasize that we are using it as a benchmark (for comparing the generated data)
+
+Q2.) (2pts.) 
+
+Why do you think the Data Life Cycle is crucial to understanding the opportunities and challenges of making the most of digital data? Give two examples.
+
+* The Data Life Cycle helps in explaining how different objectives of data management (whether that be research, preservation, or delivery) are all interconnected. One of the biggest issues facing researchers today is that digital data is often not structured properly or lacks essential metadata that can help in making judgements about relevancy. In order to make the most of digital data it is necessary to understand that the life of digital data does not end when the 'research period' is over, but rather persists until the data no longer becomes relevant and is destoyed. Therefore, properly managing data according to it's life cycle opens up opportunities for reuse in future studies and potentially mitigating some of the costs (both monitary and opportunity) associated with accessing and working with such data.
+
+
+#Part 2
+3.) San Francisco Housing Data
+
+Load the data into R.
+
+```{r}
+
+load(url("http://www.stanford.edu/~vcs/StatData/SFHousing.rda"))
+```
+
+(2 pts.)
+
+What is the name and class of each object you have loaded into your workspace?
+
+```{r}
+
+ls()
+class(housing)
+class(cities)
+```
+
+What are the names of the vectors in housing?
+
+```{r}
+names(housing)
+```
+
+How many observations are in housing?
+
+```{r}
+
+nrow(housing)
+```
+
+Explore the data using the summary function. Describe in words two problems that you see with the data.
+
+```{r}
+
+summary(housing)
+```
+
+1. Includes data for all of California (not just San Francisco)
+2. Includes a lot of data that isn't necessarily related to housing (i.e. longitude, latitude, date, etc.)
+
+
+Q5. (2 pts.) 
+
+We will work the houses in Albany, Berkeley, Piedmont, and Emeryville only. Subset the data frame so that we have only houses in these cities and keep only the variables city, zip, price, br, bsqft, and year. Call this new data frame BerkArea. This data frame should have 4059 observations and 6 variables.
+
+```{r}
+
+citSub = c("Albany", "Berkeley", "Piedmont", "Emeryville")
+
+BerkArea = housing[housing$city %in% citSub, c("city", "zip", "price", "br", "bsqft", "year")]
+BerkArea$city = droplevels(BerkArea$city)
+dim(BerkArea)
+```
+
+Q6. (2 pts.) 
+
+We are interested in making plots of price and size of house, but before we do this we will further subset the data frame to remove the unusually large values. Use the quantile function to determine the 99th percentile of price and bsqft and eliminate all of those houses that are above either of these 99th percentiles. Call this new data frame BerkArea, as well. It should have 3999 observations.
+
+```{r}
+
+BerkArea = BerkArea[BerkArea$price < quantile(BerkArea$price, probs=0.99, na.rm=TRUE) & BerkArea$bsqft < quantile(BerkArea$bsqft, probs=0.99, na.rm=TRUE), ]
+nrow(BerkArea)
+```
+
+
+Q7 (2 pts.) 
+
+Create a new vector that is called pricepsqft by dividing the sale price by the square footage. Add this new variable to the data frame.
+
+```{r}
+
+BerkArea$pricepsqft = BerkArea$price / BerkArea$bsqft
+names(BerkArea)
+```
+
+Q8 (2 pts.) 
+
+Create a vector called br5 that is the number of bedrooms in the house, except if this number is greater than 5, it is set to 5.  That is, if a house has 5 or more bedrooms then br5 will be 5. Otherwise it will be the number of bedrooms.
+
+```{r}
+
+br5 = sapply(BerkArea$br, function(x) ifelse(x < 5, x, 5))
+```
+
+Q9 (4 pts. 2 + 2 - see below) 
+
+Use the rainbow function to create a vector of 5 colors, call this vector rCols. When you call this function, set the alpha argument to 0.25 (we will describe what this does later). Create a vector called brCols of 4059 colors where each element's color corresponds to the number of bedrooms in the br5. For example, if the element in br5 is 3 then the color will be the third color in rCols.
+
+(2 pts.)
+
+```{r}
+
+rCols = rainbow(5, alpha=0.25)
+brCols = rCols[br5]
+length(brCols)
+```
+
+We are now ready to make a plot. Try out the following code: 
+
+```{r}
+plot(pricepsqft ~ bsqft, data = BerkArea,
+     main = "Housing prices in the Berkeley Area",
+     xlab = "Size of house (square ft)",
+     ylab = "Price per square foot",
+     col = brCols, pch = 19, cex = 0.5)
+legend(legend = 1:5, fill = rCols, "topright")
+```
+
+(2 pts.) What interesting features do you see that you didn't know before making this plot? 
+
+* There appears to be a weak negative relationship between price per square foot and size of house. 
+* The more bedrooms a house has the lower it's price per square foot.
+
+(2 pts.) Replicate the boxplots presented in class, with the boxplots sorted by median housing price (slide 45 of the lecture notes)
+
+```{r}
+
+boxplot(BerkArea$price ~ reorder(BerkArea$city, BerkArea$price, median))
+```

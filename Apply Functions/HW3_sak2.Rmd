@@ -1,0 +1,207 @@
+---
+title: "HW3"
+author: Artur Sak
+date: "September 20, 2016"
+output: html_document
+---
+
+##Q1 (5 pts)
+Given a function below,
+```{r}
+
+myfunc <- function(z) return(c(z,z^2, z^3%/%2))
+```
+(1) Examine the following code, and briefly explain what it is doing.
+
+```{r}
+
+y = 2:8
+matrix(myfunc(y),ncol=3)
+```
+
+This code creates a $3\times7$ matrix consisting of values between 2 and 8 in the first column, their squares in the second, and their cubes (divided by 2 and rounded down to the nearest integer) in the third.
+
+(2) Simplify the code in (1) using one of the "apply" functions and save the result as m.
+```{r}
+
+m = t(sapply(y, myfunc))
+print(m)
+```
+
+(3) Find the row product of m.
+```{r}
+
+print(apply(m,1,prod))
+```
+(4) Find the column sum of m in two ways.
+```{r}
+
+print(apply(m,2,sum))
+print(colSums(m))
+```
+
+(5) Could you divide all the values by 2 in two ways?
+```{r}
+
+print(apply(m,2,function(x) x/2))
+print(m/2)
+```
+Yes.
+
+##Q2 (8 pts)
+Create a list with 2 elements as follows:
+```{r}
+
+l <- list(a = 1:10, b = 11:20)
+```
+(1) What is the product of the values in each element?
+```{r}
+
+print(lapply(l, prod))
+```
+(2) What is the (sample) variance of the values in each element?
+
+```{r}
+
+print(lapply(l, var))
+```
+(3) What type of object is returned if you use lapply? sapply? Show your R code that finds these answers.
+```{r}
+
+class(lapply(l,var))
+class(sapply(l,var))
+```
+
+Now create the following list:
+```{r}
+
+l.2 <- list(c = c(21:30), d = c(31:40))
+```
+(4) What is the sum of the corresponding elements of l and l.2, using one function call?
+
+```{r}
+
+print(mapply(sum, l$a,l$b,l.2$c,l.2$d))
+```
+(5) Take the log of each element in the list l:
+
+```{r}
+
+print(lapply(l, log))
+```
+(6) First change l and l.2 into matrices, make each element in the list as column,
+
+```{r}
+
+l = sapply(l, cbind)
+l.2 = do.call(cbind,l.2)
+```
+
+Then, form a list named mylist using l,l.2 and m (from Q1) (in this order).
+
+```{r}
+
+mylist = list(l, l.2, m)
+print(mylist)
+```
+
+Then, select the first column of each elements in mylist in one function call (hint '[' is the select operator).
+
+```{r}
+
+print(lapply(mylist, '[', ,1))
+```
+
+##Q3 (3 pts)
+Let's load our friend family data again.
+```{r}
+
+load(url("http://courseweb.lis.illinois.edu/~jguo24/family.rda"))
+```
+
+(1) Find the mean bmi by gender in one function call.
+
+```{r}
+
+print(tapply(family$bmi, family$gender, mean))
+```
+(2) Could you get a vector of what the type of variables the dataset is made of？
+
+```{r}
+
+print(sapply(family, class))
+```
+Yes.
+
+(3) Could you sort the firstName in height descending order?
+
+```{r}
+
+print(family[order(-family$height), c("firstName","height")])
+```
+
+Yes.
+
+##Q4 (2 pts)
+There is a famous dataset in R called "iris." It should already be loaded in R for you. If you type in ?iris you can see some documentation. Familiarize yourself with this dataset.
+```{r, eval=FALSE}
+
+?iris
+```
+
+(1) Find the mean petal length by species.
+
+```{r}
+
+print(tapply(iris$Petal.Length, iris$Species, mean))
+```
+
+(2) Now obtain the sum of the first 4 variables, by species, but using only one function call.
+
+```{r}
+print(aggregate(.~Species, iris, sum))
+```
+
+##Q5 (2 pts)
+Below are two statements, their results have different structure,
+
+```{r,eval=FALSE}
+
+lapply(1:4, function(x) x^3)
+sapply(1:4, function(x) x^3)
+```
+Could you change one of them to make the two statements return the same results (type of object)?
+
+Yes either pass in 'simplify=FALSE' as a parameter to sapply() or wrap the lapply() in unlist().
+
+```{r}
+
+print(unlist(lapply(1:4, function(x) x^3)))
+print(sapply(1:4, function(x) x^3))
+print(sapply(1:4, function(x) x^3, simplify=F))
+```
+
+##Q6. (5 pts) 
+
+Using the family data, fit a linear regression model to predict weight from height. Place your code and output (the model) below.
+
+```{r}
+
+model = lm(family$weight~family$height)
+print(summary(model))
+```
+
+How do you interpret this model?
+
+* If height increases by 1 inch, weight is expected to increase by $\approx$ 9.15lbs. 
+* The predictive model appears to be a good fit with p-values on the coefficients as well as the overall F-statistic being $<$ 0.05
+* The variables appear to have a strong positive correlation ($\approx$ 86%).
+
+Create a scatterplot of height vs weight. Add the linear regression line you found above.
+
+There appears to be a strong positive relationship between height and weight in the family data provided.
+
+```{r}
+library(ggplot2)
+ggplot(family, aes(x=height, y=weight)) + geom_point(shape=19) + geom_smooth(method=lm) + ggtitle("Family Height vs. Weight") + labs(x="Height", y="Weight")
+```

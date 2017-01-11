@@ -1,0 +1,181 @@
+---
+title: "HW7"
+author: "Artur Sak"
+date: "October 25, 2016"
+output: 
+  html_document:
+    fig_width: 10
+    fig_height: 4
+---
+
+#Question 1
+
+Write down a general regular expression to match the following:
+
+(a) Words with @ symbols in them, e.g., h\@te or v|c0din
+
+```{r}
+
+test = c("h@te", "v|c0din", "@rt", "g@@dsh|z", "sameTBH", "CDT")
+print(grep("\\@", test))
+```
+
+(b) An IP address (Four sets of 1 to 3 digits separated by periods, e.g., 100.12.162.0)
+
+```{r}
+
+test = c("100.12.162.0", "127.0.0.1", "192.168.1.1", "192.168.1.255", "0.0.0.0", "1.1.1.01", "30.168.1.255.1", "127.1","192.168.1.256","-1.2.3.4", "3...3")
+print(grep("^(?:\\d{1,3}\\.|\\d{1,3}){4}$", test))
+```
+
+(c) An email address that ends with .com, .edu, .net, .org, or .gov
+
+```{r}
+
+test = c("dude@sbcglobal.net", "bro@gmail.com", "JACK_DANIELS@yahoo.com", "qrwa@121@.gov", "com.blah.www/mahHObbis", "huehuehuehue", "wizardSLEEVE@gmail.pl")
+print(grep("^\\w+@{1}\\w+\\.{1}\\w+{1,3}", test))
+```
+
+#Question 2
+
+a. Use readLines() to read in the speeches (available as a text file in moodle) where the return value is: character vector with one element/character string per line in the file
+
+```{r}
+
+file = readLines("stateoftheunion1790-2012.txt")
+```
+
+b. Use regular expressions to find ***
+
+```{r}
+
+re = "[*]{3}"
+speeches = grep(re,file)
+```
+
+c. Use *** to identify the date of the speech
+
+```{r}
+
+dates = file[speeches + 4]
+dates = dates[!is.na(dates)]
+head(dates,10)
+```
+
+d. Use regular expressions to extract the year
+
+```{r}
+
+re = "[[:digit:]]{4}"
+yearPositions = as.numeric(gregexpr(re, dates))
+years = substr(dates, start=yearPositions, stop=yearPositions + 4)
+head(years, 10)
+```
+
+e. Use regular expressions to extract the month
+
+```{r}
+
+re = "[0-9, ]"
+months = gsub(pattern=re, replacement="", dates)
+head(months, 10)
+```
+
+f. Use *** to extract the name of the president State of the union speeches
+
+```{r}
+
+presidents = file[speeches + 3]
+presidents = presidents[!is.na(presidents)]
+head(presidents,15)
+```
+
+g. Use regular expressions and R to return the number of speeches in the dataset, and the number of presidents that gave speeches
+
+Assume *** are nodes and speeches are edges, therefore document has n-1 speeches
+
+```{r}
+
+length(file[speeches]) - 1
+
+length(unique(presidents))
+unique(presidents)
+```
+
+h. Chop the speeches up into a list there is one element for each speech. Each element is a character vector. Check: does your number of list elements match your answer above?
+
+```{r}
+speechList = list()
+for(i in 2:length(speeches)-1){
+	speechList[[i]] = paste(file[(speeches[i] + 6):(speeches[i+1] - 1)], sep="", collapse=" ")
+}
+length(speechList)
+```
+YES
+
+i. Eliminate apostrophes, numbers, and the phrase: (Applause.)
+
+```{r}
+
+cleanSpeech = function(speech) {
+	modSpeech = gsub(pattern="[[:punct:]]?[0-9'][[:punct:]]?", replacement="", x=speech)
+	modSpeech = gsub(pattern="[[:punct:]]?Applause[[:punct:]]{0,2}", replacement="", x=modSpeech, ignore.case=T)
+	return(modSpeech)
+}
+
+speechList = lapply(speechList, cleanSpeech)
+```
+
+j. Make all the characters lower case.
+
+```{r}
+
+speechList = tolower(speechList)
+```
+
+k. Split the sentences up where there are blanks and punctuation to create “words”
+
+```{r}
+
+speechList = strsplit(speechList, split="([[:blank:]]|[[:punct:]])")
+```
+
+l. Drop any empty words that resulted from this split.
+
+```{r}
+
+speechList[] = lapply(speechList[], function(x) x[x!=""])
+```
+
+m. Create a word vector for each speech.
+
+```{r}
+
+words = list()
+uniqWords = numeric()
+for(i in 1:length(speechList)) {
+	uniqWords = c(uniqWords, length(unique(speechList[[i]])))
+	words[[i]] = as.vector(table(speechList[[i]]))
+}
+```
+
+n. Normalize the word vectors to get term frequencies.
+
+```{r}
+
+normWords = lapply(words[], function(x) x/sum(x))
+```
+
+o. Carry out some exploratory analysis of the data and term frequencies. For example, find the number of sentences, extract the long words, and the political party. Plot and interpret the term frequencies. What are your observations?
+
+```{r}
+
+plot(years, uniqWords, type="l", 
+	main="Number of Unique Words in SOTU Over Time", 
+	xlab="January 8, 1790 - January 24, 2012",
+	ylab="Number of Unique Words")
+abline(h=mean(uniqWords), col="blue", lwd=2)
+legend('topleft', c("Mean of Unique Words"), lty=1, lwd=2, col="blue")
+```
+
+The number of unique words used in SOTU speeches seems to have increased over time

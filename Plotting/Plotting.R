@@ -1,0 +1,223 @@
+# @author: Artur Sak
+# Data Used: Los Angeles
+
+load("weather2011.rda")
+monthNames = c("January", "February", "March", "April",
+               "May", "June", "July", "August", "September",
+               "October", "November", "December")
+
+daysInMonth = c(31, 28, 31, 30, 31, 30, 31, 
+                  31, 30, 31, 30, 31)
+
+cumDays = cumsum(c(1, daysInMonth))
+
+makePlotRegion = function(xlim, ylim, bgcolor, ylabels, margins, cityName, xtop = TRUE) {
+  # This function is to produce a blank plot that has 
+  # the proper axes labels, background color, etc.
+  # It is to be used for both the top and bottom plot.
+  
+  # The parameters are
+  # xlim is a two element numeric vector used for the two
+  # end points of the x axis
+  # ylim is the same as xlim, but for the y axis
+  # ylabels is a numeric vector of labels for "tick marks"
+  # on the y axis
+  # We don't need to x labels because they are Month names
+  # margins specifies the size of the plot margins (see mar parameter in par)
+  # cityName is a character string to use in the title
+  # xtop indicates whether the month names are to appear
+  # at the top of the plot or the bottom of the plot
+  # 
+  # See the assignment for a pdf image of the plot that is
+  # produced as a result of calling this function.
+  par(bg=bgcolor, mar=margins)
+  plot(NULL, xlim = xlim, ylim = ylim, yaxt = "n", xaxt = "n", axes = FALSE)
+  if(xtop) {
+  	ylab = sapply(ylabels, function(x) paste0(x, "°"))
+  	axis(side = 2, at = ylabels, labels = ylab, tick = TRUE, lty = "solid", lwd = 2, col = "darkgray", col.ticks = "#E2DED5", las = 1, hadj = 1)
+  	axis(side = 4, at = ylabels, labels = ylab, tick = TRUE, lty = "solid", lwd = 2, col = "darkgray", col.ticks = "#E2DED5", las = 1, hadj = 1, mgp = c(0,2,0))
+  } else {
+  	axis(side = 2, at = ylabels, tick = TRUE, lty = "solid", lwd = 2, col = "darkgray", col.ticks = "#E2DED5", las = 1, hadj = 1)
+  	axis(side = 4, at = ylabels, tick = TRUE, lty = "solid", lwd = 2, col = "darkgray", col.ticks = "#E2DED5", las = 1, hadj = 1, mgp = c(0,1,0))
+  }
+  
+  title(main=cityName, adj = 0)
+  side = 1 + 2 * xtop
+  axis(side, at = cumDays[-13] + 15, tick = FALSE, labels = monthNames)
+}
+
+drawTempRegion = function(day, high, low, col){
+  # This plot will produce 365 rectangles, one for each day
+  # It will be used for the record temps, normal temps, and 
+  # observed temps
+  rect(xleft = c(0:364), xright = c(1:365), ybottom = low, ytop = high, border = NA, col = col)
+  # day - a numeric vector of 365 dates
+  # high - a numeric vector of 365 high temperatures
+  # low - a numeric vector of 365 low temperatures
+  # col - color to fill the rectangles
+  
+}
+
+addGrid = function(location, col, ltype, vertical = TRUE) {
+  # This function adds a set of parallel grid lines
+  # It will be used to place vertical and horizontal lines
+  # on both temp and precip plots
+  if(vertical) {
+  	location = location[-1]
+  	abline(v = location, lty=ltype, col=col)
+  } else {
+  	abline(h = location, lty=ltype, col=col)
+  }
+  # location is a numeric vector of locations for the lines
+  # col - the color to make the lines
+  # ltype - the type of line to make
+  # vertical - indicates whether the lines are vertical or horizontal
+}
+
+monthPrecip = function(day, dailyprecip, normal, first = FALSE){
+  # This function adds one month's precipitation to the 
+  # precipitation plot.
+  # It will be called 12 times, once for each month
+  # It creates the cumulative precipitation curve,
+  # fills the area below with color, add the total
+  # precipitation for the month, and adds a reference
+  # line and text for the normal value for the month
+  points(x = day, y = dailyprecip, col = "#2D5667", type = "l", lwd = 4)
+  polygon(x = c(day, max(day), day[1]), y = c(dailyprecip, 0, 0), col = "#C2BCA4", border = NA)
+  points(x = c(day[1], max(day)), y = rep(normal, 2), type = "l", col = "#6A848B",lwd = 2)
+  if(first) {
+  	text(x = day[1] + 1, y = normal[1] + 0.5, labels = paste0("NORMAL\n", normal), cex = .5, adj = 0)
+  	text(x = max(day) - 2, y = max(dailyprecip) + 0.05, labels = paste0("ACTUAL  ", max(dailyprecip)), cex = .5, adj = 1)
+  } else {
+  	text(x = day[1] + 1, y = normal[1] + 0.25, labels = normal, cex = .5, adj = 0)
+  	text(x = max(day) - 0.5, y = max(dailyprecip) + 0.2, labels = max(dailyprecip), cex = .5, adj = 1)
+  }
+  # day a numeric vector of dates for the month
+  # dailyprecip a numeric vector of precipitation recorded
+  # for the month (any NAs can be set to 0)
+  # normal a single value, which is the normal total precip
+  # for the month
+  
+}
+
+finalPlot = function(temp, precip){
+  # The purpose of this function is to create the whole plot
+  # Include here all of the set up that you need for
+  # calling each of the above functions.
+  # temp is the data frame sfoWeather or laxWeather
+  # precip is the data frame sfoMonthlyPrecip or laxMonthlyPrecip
+
+  
+  # Here are some vectors that you might find handy
+  normPrecip = as.numeric(as.character(precip$normal))
+  ### Fill in the various stages with your code
+ 
+  
+  ### Add any additional variables that you will need here
+
+  ### Set up the graphics device to plot to pdf and layout
+  ### the two plots on one canvas
+
+  pdf("LA_PRECIP", width = 14, height = 7.5)
+  layout(matrix(c(1,2), nrow = 2, ncol = 1, byrow=TRUE), height = c(5,2.5))
+  
+  ### Call makePlotRegion to create the plotting region
+  ### for the temperature plot
+  ytix = seq(20, 110, by = 10)
+  makePlotRegion(c(14,352), c(23,110), "#E2DED5", ytix, c(0, 3, 4, 2.5), "Los Angeles Weather in 2013\n", TRUE)
+  
+  ### Call drawTempRegion 3 times to add the rectangles for
+  ### the record, normal, and observed temps
+  temp = temp[!is.na(temp$High) & !is.na(temp$PrecipYr), ]
+
+  drawTempRegion(c(1:365), temp$RecordLow, temp$RecordHigh, "#C0B9A6")
+  drawTempRegion(c(1:365), temp$NormalLow, temp$NormalHigh, "#9E9282")
+  drawTempRegion(c(1:365), temp$Low,temp$High,"#5e3b49")
+  
+  ### Call addGrid to add the grid lines to the plot
+  addGrid(cumDays,'black', 3)
+  addGrid(seq(20, 120, by = 10), col = "#E2DED5", lty = 1, FALSE)
+  ### Add the markers for the record breaking days
+  recHighs = which(temp$High >= temp$RecordHigh)
+  recLows = which(temp$Low <= temp$RecordLow)
+
+  sapply(recHighs, function(x) {
+  	segments(x0 = x - 0.5, y0 = temp$High[x], x1 = x - 0.5, y1 = temp$High[x] + 10, lwd = 0.5)
+  	if(temp$High[x] == temp$RecordHigh[x]) {
+  		text(x = x, y = temp$High[x] + 9, labels = paste0("TIED RECORD\nHIGH: ", temp$High[x], "°"), cex = .5, adj = 0)
+  	} else {
+  		text(x = x, y = temp$High[x] + 9, labels = paste0("RECORD HIGH: ", temp$High[x], "°"), cex = .5, adj = 0)
+  	}
+  })
+
+  # Ugly fix for adjacent record lows
+  for(i in 1:length(recLows)){
+  	low = recLows[i]
+  	segments(x0 = low - 0.5, y0 = temp$Low[low], x1 = low - 0.5, y1 = temp$Low[low] - 10 - ifelse(i < length(recLows) & i < 3 & (abs(low - recLows[i + 1]) <= 2), 3 * i, 0), lwd = 0.5)
+  	if(temp$Low[low] == temp$RecordLow[low]) {
+  		text(x = low, y = temp$Low[low] - 9 - ifelse(i < length(recLows) & i < 3 & (abs(low - recLows[i + 1]) <= 2), 3 * i, 0), labels = paste0("TIED RECORD\nLOW: ", temp$Low[low], "°"), cex = .5, adj = 0)
+  	} else {
+  		text(x = low, y = temp$Low[low] - 9 - ifelse(i < length(recLows) & i < 3 & (abs(low - recLows[i + 1]) <= 2), 3 * i, 0), labels = paste0("RECORD LOW: ", temp$Low[low], "°"), cex = .5, adj = 0)
+  	}
+  }
+  
+  ### Add the titles
+  text(x = 20, y = 110, labels = "Temperature", cex = 1.1, col = "black", font=2)
+  text(x = 55.5, y = 103, labels = "Bars represent range between the daily high and low.", cex = .9, col = "black")
+  text(x = 54.75, y = 99, labels = "Average daily low temperature for the year was 54.0°,", cex = .9, col = "black")
+  text(x = 39.5, y = 95, labels = "and the average daily high was 67.9°.", cex = .9, col = "black")
+  
+  rect(xleft = 181, xright = 183, ytop = 47, ybottom = 25, col = "#C0B9A6", border = NA)
+  rect(xleft = 181, xright = 183, ytop = 42, ybottom = 32, col = "#9E9282", border = NA)
+  rect(xleft = 181, xright = 182.25, ytop = 43, ybottom = 35, col = "#5e3b49", border = NA)
+
+  text(x = 171, y = 47, labels = "RECORD HIGH", cex = .4, col = "black")
+  text(x = 171, y = 26, labels = "RECORD LOW", cex = .4, col = "black")
+  text(x = 168, y = 37, labels = "NORMAL RANGE", cex = .4, col = "black")
+  text(x = 190, y = 43, labels = "-ACTUAL HIGH", cex = .4, col = "black")
+  text(x = 190, y = 35, labels = "-ACTUAL LOW", cex = .4, col = "black")
+
+  segments(x0 = 177, y0 = 32, x1 = 177, y1 = 42, lwd = 0.5)
+  segments(x0 = 177, y0 = 32, x1 = 178, y1 = 32, lwd = 0.5)
+  segments(x0 = 177, y0 = 42, x1 = 178, y1 = 42, lwd = 0.5)
+  
+  
+  
+  ### Call makePlotRegion to create the plotting region
+  ### for the precipitation plot
+  makePlotRegion(c(14, 352), c(0, 5), "#E2DED5", seq(0, 4, by = 1), c(3, 3, 1, 2.5), cityName = "", FALSE)
+  
+  ### Call monthPrecip 12 times to create each months 
+  ### cumulative precipitation plot. To do this use 
+  ### sapply(1:12, function(m) {
+  ###             code
+  ###             monthPrecip(XXXX)
+  ###             }) 
+  ### the anonymous function calls monthPrecip with the 
+  ### appropriate arguments
+  sapply(1:12, function(m) {
+  	if(m == 1) {
+  		monthPrecip(cumDays[m] + temp$Day[temp$Month == m], cumsum(temp$Precip[temp$Month == m]), normPrecip[m], TRUE)
+  	} else {
+  		monthPrecip(cumDays[m] + temp$Day[temp$Month == m], cumsum(temp$Precip[temp$Month == m]), normPrecip[m])
+  	}
+  })
+
+  # To fix issue with normal line not aligning properly
+  cumDaysFix = cumsum(c(33, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31))
+
+  ### Call addGrid to add the grid lines to the plot
+  addGrid(location = seq(0, 5, by = 1), col = "#E2DED5", ltype = "solid", vertical = FALSE)
+  segments(x0 = cumDaysFix , y0 = 0, y1 = 4, col = "black", lty="dotted")
+  
+  ### Add the titles
+  text(x = 20, y = 4.25, labels = "Precipitation", cex= 1.1, font = 2, pos = 3)
+  text(x = 155, y = 4.25, labels = "Cumulative monthly precipitation in inches compared with normal monthly precipitation. Total precipitation in LA was 9.87.", cex= .9, pos=3)
+
+  ### Close the pdf device dev.off()
+  dev.off()
+}
+
+finalPlot(temp = laxWeather, precip = laxMonthlyPrecip)
+
+
